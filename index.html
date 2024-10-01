@@ -3,16 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Scanner Access</title>
-    <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
+    <title>Barcode Scanner with ZXing</title>
     <style>
-        #interactive {
-            position: relative;
+        video {
             width: 100%;
             height: auto;
-        }
-        #interactive video {
-            width: 100%;
         }
         #userID {
             margin-top: 20px;
@@ -21,55 +16,35 @@
 </head>
 <body>
     <h2>Scan your Barcode</h2>
-    
+
     <!-- Camera Stream for Barcode Scanning -->
-    <div id="interactive" class="viewport"></div>
-    
+    <video id="video" autoplay></video>
+
     <!-- Input for manually entered ID -->
     <input type="text" id="userID" placeholder="Enter or scan your ID">
     <button onclick="validateID()">Submit</button>
 
-    <script>
-        // Adjusted QuaggaJS initialization for better accuracy
-        Quagga.init({
-            inputStream: {
-                name: "Live",
-                type: "LiveStream",
-                target: document.querySelector('#interactive'), 
-                constraints: {
-                    width: 640,
-                    height: 480,
-                    facingMode: "environment" // Rear camera
-                }
-            },
-            decoder: {
-                readers: ["code_128_reader", "ean_reader", "ean_8_reader"],
-                debug: {
-                    drawBoundingBox: true,
-                    showFrequency: true,
-                    drawScanline: true,
-                    showPattern: true
-                }
-            },
-            locate: true // Enable locating barcode even if not centered
-        }, function(err) {
-            if (err) {
-                console.error(err);
-                alert("Error starting the camera!");
-                return;
+    <script type="module">
+        import { BrowserMultiFormatReader } from '@zxing/browser';
+        import { Result } from '@zxing/library';
+
+        // Initialize the barcode reader
+        const codeReader = new BrowserMultiFormatReader();
+        const videoElement = document.getElementById('video');
+
+        // Start the video stream for barcode scanning
+        codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+            if (result) {
+                console.log('Barcode detected: ', result.text);
+                document.getElementById('userID').value = result.text;
+                validateID();
             }
-            Quagga.start();
+            if (err && !(err instanceof Result)) {
+                console.error(err);
+            }
         });
 
-        // Detect barcode and fill input
-        Quagga.onDetected(function(result) {
-            const code = result.codeResult.code;
-            console.log('Barcode detected:', code);
-            document.getElementById('userID').value = code;
-            validateID();
-        });
-
-        // Function to validate the ID
+        // Function to validate the ID from the JSON file
         async function validateID() {
             const userInput = document.getElementById("userID").value.trim();
 
@@ -89,5 +64,8 @@
             }
         }
     </script>
+
+    <!-- CDN for zxing-js -->
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js"></script>
 </body>
 </html>
