@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barcode Scanner with ZXing</title>
+    <title>Camera Barcode Scanner</title>
     <style>
         video {
             width: 100%;
@@ -11,35 +11,41 @@
         }
         #userID {
             margin-top: 20px;
+            font-size: 16px;
+            padding: 10px;
+        }
+        button {
+            font-size: 16px;
+            padding: 10px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <h2>Scan your Barcode</h2>
+    <h2>Scan Your Barcode</h2>
 
     <!-- Camera Stream for Barcode Scanning -->
     <video id="video" autoplay></video>
 
-    <!-- Input for manually entered ID -->
+    <!-- Input for scanned or manually entered ID -->
     <input type="text" id="userID" placeholder="Enter or scan your ID">
     <button onclick="validateID()">Submit</button>
 
     <script type="module">
         import { BrowserMultiFormatReader } from '@zxing/browser';
-        import { Result } from '@zxing/library';
-
+        
         // Initialize the barcode reader
         const codeReader = new BrowserMultiFormatReader();
         const videoElement = document.getElementById('video');
 
-        // Start the video stream for barcode scanning
+        // Start the video stream and scan barcodes
         codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
             if (result) {
                 console.log('Barcode detected: ', result.text);
                 document.getElementById('userID').value = result.text;
-                validateID();
+                validateID();  // Automatically validate once barcode is scanned
             }
-            if (err && !(err instanceof Result)) {
+            if (err) {
                 console.error(err);
             }
         });
@@ -49,9 +55,11 @@
             const userInput = document.getElementById("userID").value.trim();
 
             try {
+                // Fetch the JSON file
                 const response = await fetch('https://jasset.netlify.app/apps/users/barcode/users.json');
                 const data = await response.json();
 
+                // Search for the user with the matching ID
                 const user = data.users.find(u => u.id === userInput);
 
                 if (user) {
@@ -65,7 +73,7 @@
         }
     </script>
 
-    <!-- CDN for zxing-js -->
+    <!-- Importing the ZXing JavaScript library -->
     <script src="https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js"></script>
 </body>
 </html>
